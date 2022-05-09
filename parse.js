@@ -15,9 +15,9 @@ module.exports = (input) => {
   const normal = (line) => {
     currentChunk?.changes.push({
       type: "normal",
-      normal: true,
-      ln1: deletedLineCounter++,
-      ln2: addedLineCounter++,
+      isNormal: true,
+      oldLineNumber: deletedLineCounter++,
+      newLineNumber: addedLineCounter++,
       content: line,
     });
     currentFileChanges.oldLines--;
@@ -31,8 +31,9 @@ module.exports = (input) => {
       chunks: [],
       deletions: 0,
       additions: 0,
-      from: fromFileName,
-      to: toFileName,
+      oldPath: fromFileName,
+      newPath: toFileName,
+      type: "modify",
     };
 
     files.push(currentFile);
@@ -44,19 +45,21 @@ module.exports = (input) => {
 
   const newFile = () => {
     restart();
-    currentFile.new = true;
-    currentFile.from = "/dev/null";
+    currentFile.type = "add";
+    currentFile.oldPath = "/dev/null";
   };
 
   const deletedFile = () => {
     restart();
-    currentFile.deleted = true;
-    currentFile.to = "/dev/null";
+    currentFile.type = "delete";
+    currentFile.newPath = "/dev/null";
   };
 
   const index = (line) => {
     restart();
-    currentFile.index = line.split(" ").slice(1);
+    const revisions = line.split(" ")[1].split("..");
+    currentFile.oldRevision = revisions[0];
+    currentFile.newRevision = revisions[1];
   };
 
   const fromFile = (line) => {
@@ -97,9 +100,9 @@ module.exports = (input) => {
     if (!currentChunk) return;
 
     currentChunk.changes.push({
-      type: "del",
-      del: true,
-      ln: deletedLineCounter++,
+      type: "delete",
+      isDelete: true,
+      lineNumber: deletedLineCounter++,
       content: line,
     });
     currentFile.deletions++;
@@ -110,9 +113,9 @@ module.exports = (input) => {
     if (!currentChunk) return;
 
     currentChunk.changes.push({
-      type: "add",
-      add: true,
-      ln: addedLineCounter++,
+      type: "insert",
+      isInsert: true,
+      lineNumber: addedLineCounter++,
       content: line,
     });
     currentFile.additions++;
@@ -127,9 +130,9 @@ module.exports = (input) => {
     currentChunk.changes.push({
       type: mostRecentChange.type,
       [mostRecentChange.type]: true,
-      ln1: mostRecentChange.ln1,
-      ln2: mostRecentChange.ln2,
-      ln: mostRecentChange.ln,
+      oldLineNumber: mostRecentChange.oldLineNumber,
+      newLineNumber: mostRecentChange.newLineNumber,
+      lineNumber: mostRecentChange.lineNumber,
       content: line,
     });
   };
