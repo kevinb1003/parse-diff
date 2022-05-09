@@ -122,19 +122,16 @@ module.exports = (input) => {
     currentFileChanges.newLines--;
   };
 
-  const eof = (line) => {
+  const eof = () => {
     if (!currentChunk) return;
 
     const [mostRecentChange] = currentChunk.changes.slice(-1);
-
-    currentChunk.changes.push({
-      type: mostRecentChange.type,
-      [mostRecentChange.type]: true,
-      oldLineNumber: mostRecentChange.oldLineNumber,
-      newLineNumber: mostRecentChange.newLineNumber,
-      lineNumber: mostRecentChange.lineNumber,
-      content: line,
-    });
+    if (!mostRecentChange.isDelete) {
+      currentChunk.newEndingNewLine = false;
+    }
+    if (!mostRecentChange.isInsert) {
+      currentChunk.oldEndingNewLine = false;
+    }
   };
 
   const schemaHeaders = [
